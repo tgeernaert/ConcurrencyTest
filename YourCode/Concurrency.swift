@@ -3,6 +3,7 @@
 
 
 import Foundation
+import Dispatch
 
 /// To complete this task, fill out the `loadMessage` method below this comment.
 ///
@@ -50,15 +51,29 @@ import Foundation
 /// * Code readability & matching apple naming guidelines
 /// * Showing work through git history
 ///
-func loadMessage(completion: @escaping (String) -> Void) {
-    
-    fetchMessageOne { (messageOne) in
+
+let timeoutMessage = "Unable to load message - Time out exceeded"
+typealias MessagePart = (@escaping (String) -> Void) -> Void
+
+func loadMessage(parts: [MessagePart] = [fetchMessageOne, fetchMessageTwo],
+                 completion: @escaping (String) -> Void) {
+
+    var hasTimedOut = false
+    DispatchQueue.main.asyncAfter(deadline: .now() + DispatchTimeInterval.milliseconds(2000)) {
+        hasTimedOut = true
     }
-    
-    fetchMessageTwo { (messageTwo) in
+
+    let group = DispatchGroup()
+    parts.forEach() {
+        group.enter()
+
+        $0() { (message) in
+            print(message)
+            group.leave()
+        }
     }
-    
-    /// The completion handler that should be called with the joined messages from fetchMessageOne & fetchMessageTwo
-    /// Please delete this comment before submission.
-    completion("Good morning!")
+
+    group.notify(queue: .main) {
+        completion(hasTimedOut ? timeoutMessage : "Good morning!")
+    }
 }
