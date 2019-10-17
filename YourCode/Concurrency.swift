@@ -53,27 +53,21 @@ import Dispatch
 ///
 
 let timeoutMessage = "Unable to load message - Time out exceeded"
-typealias MessagePart = (@escaping (String) -> Void) -> Void
+typealias MessagePartFetch = (@escaping (String) -> Void) -> Void
 
-func loadMessage(parts: [MessagePart] = [fetchMessageOne, fetchMessageTwo],
+func loadMessage(parts: [MessagePartFetch] = [fetchMessageOne, fetchMessageTwo],
                  completion: @escaping (String) -> Void) {
 
-    var hasTimedOut = false
-    DispatchQueue.main.asyncAfter(deadline: .now() + DispatchTimeInterval.milliseconds(2000)) {
-        hasTimedOut = true
-    }
-
     let group = DispatchGroup()
-    parts.forEach() {
-        group.enter()
-
-        $0() { (message) in
-            print(message)
-            group.leave()
-        }
-    }
+    let fetchers: [GroupedFetcher] = parts.map { GroupedFetcher($0, group: group) }
+    fetchers.forEach { $0.fetch() }
 
     group.notify(queue: .main) {
-        completion(hasTimedOut ? timeoutMessage : "Good morning!")
+        if (fetchers.first { $0.state == FetcherState.timedOut }) != nil  {
+            completion(timeoutMessage)
+        } else {
+            let message = fetchers.compactMap { $0.message }.joined(separator: " ")
+            completion(message)
+        }
     }
 }

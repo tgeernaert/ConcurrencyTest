@@ -12,7 +12,7 @@ import XCTest
 class DataSourceTests: XCTestCase {
 
     func testThatFetchMessageOneCallsClosureWithResult() {
-        let fetchExpectation = expectation(description: "FetchMessage")
+        let fetchExpectation = expectation(description: "Fetch Message One")
         var result: String?
         fetchMessageOne() {
             result = $0
@@ -25,7 +25,7 @@ class DataSourceTests: XCTestCase {
     }
 
     func testThatFetchMessageTwoCallsClosureWithResult() {
-        let fetchExpectation = expectation(description: "FetchMessage")
+        let fetchExpectation = expectation(description: "Fetch Message Two")
         var result: String?
         fetchMessageTwo() {
             result = $0
