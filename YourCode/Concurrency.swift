@@ -5,69 +5,67 @@
 import Foundation
 import Dispatch
 
-/// To complete this task, fill out the `loadMessage` method below this comment.
-///
-///  * Read the requirements defined below.
-///  * Feel free to research solutions on the interent, but don't copy and paste code.
-///  * Do track your progress in git and submit the project with git history.
-///  * Don't use external libraries such as PromiseKit / RXSwift.
-///
-/// # Background
-///
-/// We have created two data sources `fetchMessageOne` & `fetchMessageTwo`
-/// that load two parts of a messaage. These mimic loading data from the network and call their completion handlers in 0-2 seconds.
-/// (You don't need to look at the source code for these functions, but you should know they complete at random times between runs).
-///
-///
-/// # Requirements Part 1
-///
-/// This function should fetch both parts of the message (concurrently using GCD or OperationQueue) and join them with
-/// a space. e.g if `fetchMessageOne` completes with "Good" and `fetchMessageTwo` completes with "morning!" then loadMessage should call it's completion once with the String:
-///   "Good morning!"
-/// If loading either part of the message takes more than 2 seconds then `loadMessage` should complete with the String
-///   "Unable to load message - Time out exceeded"
-///
-/// The function should only complete once and must always return the full message in the correct order.
-///
-/// # Requirements Part 2
-///
-/// Refactor this function to use idomatic Swift code.
-/// Follow the apple Swift naming guidelines. If you choose you can abstract classes, structs, protocols, enums, generics etc.
-///
-/// # Requirements Part 3
-///
-/// Refactor this function so it is easy to unit test.
-/// Write unit tests that verify both the successful loading & timeout behaviour. These tests must be deterministic.
-///
-/// # Requirement Part 4
-/// * The completion handler should always be called on the main thread.
-/// * If loadMessage is called on the main thread, loadMessage should not block the main thread.
-///
-///
-/// How we assess this task
-///
-/// * Completed functional requirements
-/// * Deterministic Unit tests
-/// * Code readability & matching apple naming guidelines
-/// * Showing work through git history
-///
-
 let timeoutMessage = "Unable to load message - Time out exceeded"
-typealias MessagePartFetch = (@escaping (String) -> Void) -> Void
 
-func loadMessage(parts: [MessagePartFetch] = [fetchMessageOne, fetchMessageTwo],
-                 completion: @escaping (String) -> Void) {
+/// preserve previous global interface, for backward compatibility
+@available(*, deprecated, message: "Migrate to loading messages using MessageLoader")
+func loadMessage(completion: @escaping (String) -> Void) {
+    MessageLoader().load(completion: completion)
+}
 
-    let group = DispatchGroup()
-    let fetchers: [GroupedFetcher] = parts.map { GroupedFetcher($0, group: group) }
-    fetchers.forEach { $0.fetch() }
+/// MessageLoader takes two MessageFetchers and joins the strings that they asyncronously return in the correct order.
+struct MessageLoader {
 
-    group.notify(queue: .main) {
-        if (fetchers.first { $0.state == FetcherState.timedOut }) != nil  {
-            completion(timeoutMessage)
-        } else {
-            let message = fetchers.compactMap { $0.message }.joined(separator: " ")
-            completion(message)
+    /// initializer optionally takes two MessageFetchers
+    ///
+    /// This will allow for dependancy injection, while keeping the existing interface with the default parameters.
+    /// If either of these MessageFetchers times out, the message will be a timeout message
+    ///
+    /// - parameter first: The fetcher for the first part of the message
+    /// - parameter second: The fetcher for the second part of the message
+    ///
+    /// - note:  The order that these two fetchers return will not affect the resulting message.
+    ///
+    init(first: @escaping MessageFetcher = fetchMessageOne,
+         second: @escaping MessageFetcher = fetchMessageTwo) {
+        firstFetcher = GroupedFetcher(first, group: group, timeout: timeout)
+        secondFetcher = GroupedFetcher(second, group: group, timeout: timeout)
+    }
+
+    /// Load the two message parts and combine them in the correct order
+    ///
+    /// - parameter completion: The closure to be called once we have determined what the message should be
+    ///
+    func load(completion: @escaping (String) -> Void) {
+        firstFetcher.fetch()
+        secondFetcher.fetch()
+
+        group.notify(queue: .main) {
+            if self.timedOut {
+                completion(timeoutMessage)
+            } else {
+                completion(self.message)
+            }
         }
     }
+
+    // MARK: - Private
+
+    private var message: String {
+        assert(succeded, "Error: You can only access message if the fetchers have succeded.")
+        return"\(firstFetcher.message) \(secondFetcher.message)"
+    }
+
+    private var timedOut: Bool {
+        return firstFetcher.state == .timedOut || secondFetcher.state == .timedOut
+    }
+
+    private var succeded: Bool {
+        return firstFetcher.state == .success && secondFetcher.state == .success
+    }
+
+    private let timeout = 2
+    private let group = DispatchGroup()
+    private let firstFetcher: GroupedFetcher
+    private let secondFetcher: GroupedFetcher
 }

@@ -7,25 +7,33 @@
 import XCTest
 @testable import ConcurrencyTest
 
-class ConcurrencyTests: XCTestCase {
+class MessageLoaderTests: XCTestCase {
 
-    func testThatLoadMessageCallsClosureWithResult() {
-        let fetchExpectation = expectation(description: "Load Simple Message")
+    let almostImmediately = DispatchTimeInterval.seconds(0)
+    let shouldTimeout = DispatchTimeInterval.seconds(5)
+    let longDelay = DispatchTimeInterval.milliseconds(1800)
+
+    func testThatMessagesAreJoinedInTheCorrectOrder() {
+        let fetchExpectation = expectation(description: "Reorder Messages")
         var result: String?
-        loadMessage() {
+
+        MessageLoader(first: fetcherBuilder(message: "1", delay: longDelay),
+                      second: fetcherBuilder(message: "2", delay: almostImmediately)).load {
             result = $0
             fetchExpectation.fulfill()
         }
 
         waitForExpectations(timeout: 3)
 
-        XCTAssertNotNil(result)
+        XCTAssert(result == "1 2")
     }
 
     func testThatLoadMessageTimesOutAfterTwoSeconds() {
         let fetchExpectation = expectation(description: "Load Timout Message")
         var result: String?
-        loadMessage(parts: [fetcher(message: "Too Long", delay: DispatchTimeInterval.seconds(5))]) {
+
+        MessageLoader(first: fetcherBuilder(message: "Too Long", delay: shouldTimeout),
+                      second: fetcherBuilder(message: "2", delay: almostImmediately)).load {
             result = $0
             fetchExpectation.fulfill()
         }
@@ -35,27 +43,11 @@ class ConcurrencyTests: XCTestCase {
         XCTAssert(result == timeoutMessage)
     }
 
-    func testThatMessagesArriveInTheCorrectOrder() {
-        let fetchExpectation = expectation(description: "Load Disordered Message")
-        var result: String?
-
-        let messages = ["1", "2", "3", "4", "5", "6"]
-        let delays = [1200, 800, 800, 400, 400, 0].map { DispatchTimeInterval.milliseconds($0) }
-        let parts = zip(messages, delays).map { fetcher(message: $0.0, delay: $0.1) }
-
-        loadMessage(parts: parts) {
-            result = $0
-            fetchExpectation.fulfill()
-        }
-
-        waitForExpectations(timeout: 3)
-
-        XCTAssert(result == "1 2 3 4 5 6")
-    }
-
-    func fetcher(message: String, delay: DispatchTimeInterval) -> MessagePartFetch {
-        return { (completion) -> Void in
-            DispatchQueue.global().asyncAfter(deadline: .now() + delay) {
+    func fetcherBuilder(message: String,
+                        queue: DispatchQueue = DispatchQueue.global(),
+                        delay: DispatchTimeInterval = DispatchTimeInterval.seconds(0)) -> MessageFetcher {
+        return { completion in
+            queue.asyncAfter(deadline: .now() + delay) {
                 completion(message)
             }
         }

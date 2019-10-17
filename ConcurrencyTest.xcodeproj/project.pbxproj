@@ -15,7 +15,6 @@
 		84DC63E522FB40B0003FE734 /* ConcurrencyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DC63E422FB40B0003FE734 /* ConcurrencyTests.swift */; };
 		84DC63F022FB43ED003FE734 /* DataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DC63EF22FB43ED003FE734 /* DataSource.swift */; };
 		84DC63F222FB43FE003FE734 /* Concurrency.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DC63F122FB43FE003FE734 /* Concurrency.swift */; };
-		991F86D92357B0A3001F324F /* DataSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 991F86D82357B0A3001F324F /* DataSourceTests.swift */; };
 		991F86DF2357E3CE001F324F /* GroupedFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 991F86DE2357E3CE001F324F /* GroupedFetcher.swift */; };
 /* End PBXBuildFile section */
 
@@ -42,7 +41,6 @@
 		84DC63E622FB40B0003FE734 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		84DC63EF22FB43ED003FE734 /* DataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSource.swift; sourceTree = "<group>"; };
 		84DC63F122FB43FE003FE734 /* Concurrency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Concurrency.swift; sourceTree = "<group>"; };
-		991F86D82357B0A3001F324F /* DataSourceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSourceTests.swift; sourceTree = "<group>"; };
 		991F86DE2357E3CE001F324F /* GroupedFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupedFetcher.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -99,7 +97,6 @@
 		84DC63E322FB40B0003FE734 /* ConcurrencyTestTests */ = {
 			isa = PBXGroup;
 			children = (
-				991F86D82357B0A3001F324F /* DataSourceTests.swift */,
 				84DC63E422FB40B0003FE734 /* ConcurrencyTests.swift */,
 				84DC63E622FB40B0003FE734 /* Info.plist */,
 			);
@@ -110,8 +107,8 @@
 			isa = PBXGroup;
 			children = (
 				84DC63F122FB43FE003FE734 /* Concurrency.swift */,
-				84DC63D122FB40AF003FE734 /* ViewController.swift */,
 				991F86DE2357E3CE001F324F /* GroupedFetcher.swift */,
+				84DC63D122FB40AF003FE734 /* ViewController.swift */,
 			);
 			path = YourCode;
 			sourceTree = "<group>";
@@ -229,7 +226,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				991F86D92357B0A3001F324F /* DataSourceTests.swift in Sources */,
 				84DC63E522FB40B0003FE734 /* ConcurrencyTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
